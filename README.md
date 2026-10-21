@@ -1,6 +1,6 @@
-# Proxy Converter
+# 代理配置转换
 
-一个在本地运行的代理配置转换器，参考 [Shipengtao Proxy Converter](https://shipengtao.com/en/tools/proxy-converter/) 的功能和简洁界面实现。
+一个在本地运行的代理配置转换工具。界面只包含格式与路由选择、输入和结果，以及复制、下载操作；窄屏下输入与结果上下排列。功能需求参考 [Shipengtao Proxy Converter](https://shipengtao.com/en/tools/proxy-converter/)，界面独立实现。
 
 使用 React、TypeScript、Vite 构建。全部解析和转换在浏览器完成，无后端、账户、分析统计、外部字体或转换服务，也不会把节点写入 localStorage、Cookie 或 URL。用户主动下载时才将配置保存成文件。
 
@@ -29,9 +29,9 @@ npm run preview  # 在本地预览构建产物
 1. 每行粘贴一个 VLESS、VMess、Trojan、Hysteria2（支持 hy2 别名）或 TUIC v5 分享链接，或粘贴 Base64 订阅正文。
 2. 选择 Clash / Mihomo YAML、sing-box JSON 或 Xray JSON。
 3. 选择「代理所有流量」或「中国大陆直连」。
-4. 点击「转换配置」（Ctrl / ⌘ + Enter），然后复制或下载。
+4. 点击「转换」（Ctrl / ⌘ + Enter），在结果区复制或下载。
 
-「试用示例」包含五种协议的虚构节点，仅演示格式，不能用于连接。页面支持中英文、明暗主题与窄屏布局。更改输入、格式或路由会清除旧结果，避免误复制过期配置。
+「示例」包含五种协议的虚构节点，仅演示格式，不能用于连接。页面支持中英文、明暗主题与窄屏布局。更改输入、格式或路由会清除旧结果，避免误复制过期配置。
 
 支持 UTF-8、URL-safe 和省略填充的 Base64；节点重名会自动编号。空行和以 `#` 开头的注释会跳过，错误指向原输入行号（Base64 输入指向解码后的行号）。无效行不会阻止有效节点输出，页面会明确显示被跳过的行。超过 2 MB 的输入会被拒绝。
 

@@ -1,23 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowDownToLine,
-  ArrowRight,
-  ArrowRightLeft,
-  Check,
-  ChevronDown,
-  Clipboard,
-  Code2,
-  FileCode2,
-  Globe2,
-  LockKeyhole,
-  Moon,
-  ShieldCheck,
-  Sparkles,
-  Sun,
-  Trash2,
-  TriangleAlert,
-} from "lucide-react";
-import {
   convert,
   ConversionError,
   EXAMPLE,
@@ -27,11 +9,12 @@ import {
 } from "./converter";
 import { copy, issueText, type Language } from "./i18n";
 
-const formats: { id: Format; title: string; sub: string; ext: string }[] = [
-  { id: "clash", title: "Clash / Mihomo", sub: "YAML", ext: "yaml" },
-  { id: "sing-box", title: "sing-box", sub: "JSON", ext: "json" },
-  { id: "xray", title: "Xray", sub: "JSON", ext: "json" },
+const formats: { id: Format; title: string; ext: string }[] = [
+  { id: "clash", title: "Clash / Mihomo (YAML)", ext: "yaml" },
+  { id: "sing-box", title: "sing-box (JSON)", ext: "json" },
+  { id: "xray", title: "Xray (JSON)", ext: "json" },
 ];
+
 export default function App() {
   const [lang, setLang] = useState<Language>("zh");
   const [dark, setDark] = useState(false);
@@ -44,18 +27,19 @@ export default function App() {
   const [clipboardError, setClipboardError] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const t = copy[lang];
+  const en = lang === "en";
   const selected = formats.find((f) => f.id === format)!;
+  const lineCount = input.split(/\r?\n/).filter((line) => line.trim()).length;
+
   useEffect(() => {
-    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
-    document.title =
-      lang === "zh"
-        ? "代理配置转换器 · Proxy Converter"
-        : "Proxy config converter · Local tools";
-  }, [lang]);
+    document.documentElement.lang = en ? "en" : "zh-CN";
+    document.title = en ? "Proxy Converter" : "代理配置转换";
+  }, [en]);
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
   }, [dark]);
   useEffect(() => () => clearTimeout(timer.current), []);
+
   function invalidate() {
     setResult(null);
     setError("");
@@ -79,6 +63,7 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(result!.config);
       setCopied(true);
+      setClipboardError(false);
       clearTimeout(timer.current);
       timer.current = setTimeout(() => setCopied(false), 2200);
     } catch {
@@ -99,388 +84,222 @@ export default function App() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+
   return (
-    <>
-      <header className="site-header">
-        <div className="header-inner">
-          <a className="brand" href="#">
-            <span className="brand-symbol">
-              <ArrowRightLeft size={20} strokeWidth={2.4} />
-            </span>
-            proxy<span className="brand-light">converter</span>
-            <span className="local-tag">LOCAL</span>
-          </a>
-          <nav aria-label={lang === "en" ? "Navigation" : "导航"}>
-            <a className="nav-active" href="#converter">
-              {t.converter}
-            </a>
-            <a href="#guide">{t.guide}</a>
-          </nav>
-          <div className="header-actions">
-            <span className="local-status">
-              <i />
-              {t.local}
-            </span>
-            <span className="header-divider" />
-            <button
-              className="icon-button language"
-              aria-label={t.language}
-              onClick={() => setLang(lang === "en" ? "zh" : "en")}
-            >
-              <Globe2 size={15} />
-              {lang === "en" ? "中" : "EN"}
-            </button>
-            <button
-              className="icon-button"
-              aria-label={t.theme}
-              onClick={() => setDark(!dark)}
-            >
-              {dark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
+    <main id="converter">
+      <header className="page-header">
+        <h1>{en ? "Proxy Converter" : "代理配置转换"}</h1>
+        <div className="preferences">
+          <button
+            className="text-button"
+            aria-label={t.language}
+            onClick={() => setLang(en ? "zh" : "en")}
+          >
+            {en ? "中文" : "English"}
+          </button>
+          <button
+            className="text-button"
+            aria-label={t.theme}
+            onClick={() => setDark(!dark)}
+          >
+            {dark ? (en ? "Light" : "浅色") : en ? "Dark" : "深色"}
+          </button>
         </div>
       </header>
-      <main>
-        <section className="hero" id="converter">
-          <div className="eyebrow">
-            <span />
-            {t.eyebrow}
-          </div>
-          <h1>
-            {t.title}
-            <span className="title-dot">.</span>
-          </h1>
-          <p className="intro">{t.intro}</p>
-          <div className="protocols">
-            {["VLESS", "VMess", "Trojan", "Hysteria2", "TUIC"].map((p) => (
-              <span key={p}>{p}</span>
-            ))}
-            <span className="protocol-arrow">→</span>
-            <span className="protocol-output">YAML / JSON</span>
-          </div>
-        </section>
-        <aside className="privacy">
-          <span className="privacy-icon">
-            <ShieldCheck size={21} />
-          </span>
-          <div>
-            <strong>{t.privacy}</strong>
-            <p>{t.privacyText}</p>
-          </div>
-          <LockKeyhole className="privacy-lock" size={31} strokeWidth={1.3} />
-        </aside>
-        <section className="converter-card" aria-label={t.converter}>
-          <div className="input-heading">
-            <label htmlFor="node-input">
-              <span className="step-number">01</span>
-              {t.input}
-            </label>
-            <button
-              className="text-button"
-              onClick={() => {
-                invalidate();
-                setInput(EXAMPLE);
-              }}
-            >
-              <Sparkles size={14} />
-              {t.example}
-            </button>
-          </div>
-          <p className="field-help" id="input-help">
-            {t.inputHelp}
-          </p>
-          <div className="textarea-wrap">
-            <textarea
-              id="node-input"
-              aria-describedby="input-help"
-              value={input}
-              spellCheck={false}
-              autoCapitalize="off"
-              autoCorrect="off"
-              placeholder={
-                "vless://uuid@server:443?security=tls&type=ws#Tokyo\ntrojan://password@server:443?sni=example.com#Singapore\nhysteria2://password@server:443#Frankfurt\n\n" +
-                (lang === "en"
-                  ? "Or paste a base64-encoded subscription…"
-                  : "或粘贴 Base64 编码的订阅内容…")
-              }
-              onChange={(e) => {
-                setInput(e.target.value);
-                invalidate();
-              }}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  run();
-                }
-              }}
-            />
-            <div className="input-meta">
-              <span>
-                <Code2 size={13} />
-                {lang === "en" ? "Plain text · Base64" : "纯文本 · Base64"}
-              </span>
-              <span>
-                {input.trim()
-                  ? input
-                      .trim()
-                      .split(/\r?\n/)
-                      .filter((l) => l.trim()).length
-                  : 0}{" "}
-                {lang === "en" ? "lines" : "行"}
-              </span>
-            </div>
-          </div>
-          <fieldset className="format-field">
-            <legend>
-              <span className="step-number">02</span>
-              {t.format}
-            </legend>
-            <div className="format-options">
-              {formats.map((f) => (
-                <label
-                  className={`format-option ${format === f.id ? "selected" : ""}`}
-                  key={f.id}
-                >
-                  <input
-                    type="radio"
-                    name="format"
-                    value={f.id}
-                    checked={format === f.id}
-                    onChange={() => {
-                      setFormat(f.id);
-                      invalidate();
-                    }}
-                  />
-                  <FileCode2 size={21} strokeWidth={1.6} />
-                  <span>
-                    {f.title}
-                    <small>{f.sub}</small>
-                  </span>
-                  <span className="radio-indicator">
-                    {format === f.id && <span />}
-                  </span>
-                </label>
-              ))}
-            </div>
-            <p className="format-help">
-              {format === "clash"
-                ? t.clashHint
-                : format === "sing-box"
-                  ? t.singHint
-                  : t.xrayHint}
-            </p>
-          </fieldset>
-          <fieldset className="routing-field">
-            <legend>
-              <span className="step-number">03</span>
-              {t.routing}
-            </legend>
-            <div className="routing-options">
-              {(["all", "china"] as Routing[]).map((r) => (
-                <label
-                  className={`routing-option ${routing === r ? "selected" : ""}`}
-                  key={r}
-                >
-                  <input
-                    type="radio"
-                    name="routing"
-                    value={r}
-                    checked={routing === r}
-                    onChange={() => {
-                      setRouting(r);
-                      invalidate();
-                    }}
-                  />
-                  <span className="radio-indicator">
-                    {routing === r && <span />}
-                  </span>
-                  <span>
-                    <strong>{r === "all" ? t.all : t.china}</strong>
-                    <small>{r === "all" ? t.allHelp : t.chinaHelp}</small>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <div className="form-actions">
-            <button className="primary-button" onClick={run}>
-              {t.convert}
-              <ArrowRight size={17} />
-            </button>
-            <button
-              className="secondary-button"
-              onClick={() => {
-                setInput("");
-                invalidate();
-              }}
-            >
-              <Trash2 size={15} />
-              {t.clear}
-            </button>
-            <span className="keyboard-hint">Ctrl / ⌘ + Enter</span>
-          </div>
-        </section>
-        <div aria-live="polite" className="feedback">
-          {error && (
-            <div className="error-box" role="alert">
-              <TriangleAlert size={18} />
-              {issueText(error, lang)}
-            </div>
-          )}
-          {result && (
-            <>
-              <div
-                className={`result-status ${result.nodes.length ? "" : "status-error"}`}
-              >
-                {result.nodes.length ? (
-                  <>
-                    <Check size={17} />
-                    <strong>
-                      {result.nodes.length} {t.nodes}
-                    </strong>
-                    {result.decoded && (
-                      <span className="status-tag">{t.decoded}</span>
-                    )}
-                    {result.errors.length > 0 && (
-                      <span className="skipped">
-                        {result.errors.length} {t.skipped}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <TriangleAlert size={17} />
-                    {t.noNodes}
-                  </>
-                )}
-              </div>
-              {result.errors.length > 0 && (
-                <details className="issues" open>
-                  <summary>
-                    <TriangleAlert size={15} />
-                    {t.errors}
-                    <ChevronDown size={15} />
-                  </summary>
-                  <ul>
-                    {result.errors.map((e, i) => (
-                      <li key={i}>
-                        <span>
-                          {t.line} {e.line}
-                          {lang === "zh" ? " 行" : ""}
-                        </span>
-                        {issueText(e.message, lang)}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-            </>
-          )}
-        </div>
-        <section className="result-section" aria-label={t.result}>
-          <div className="result-heading">
-            <h2>
-              {t.result}
-              <span className="file-type">{selected.sub}</span>
-            </h2>
-            <div>
-              <button
-                className="secondary-button small"
-                disabled={!result?.config}
-                onClick={copyConfig}
-              >
-                {copied ? <Check size={14} /> : <Clipboard size={14} />}
-                {copied ? t.copied : t.copy}
-              </button>
-              <button
-                className="secondary-button small"
-                disabled={!result?.config}
-                onClick={download}
-              >
-                <ArrowDownToLine size={14} />
-                {t.download}
-              </button>
-            </div>
-          </div>
-          {clipboardError && (
-            <p className="copy-error" role="alert">
-              {t.copyError}
-            </p>
-          )}
-          {result?.config ? (
-            <div className="code-panel">
-              <div className="code-toolbar">
-                <span>
-                  <span className="file-dot" />
-                  {format}-config.{selected.ext}
-                </span>
-                <span>
-                  {t.generated} · {result.config.split("\n").length}{" "}
-                  {lang === "en" ? "lines" : "行"}
-                </span>
-              </div>
-              <pre tabIndex={0} aria-label={t.result}>
-                <code>{result.config}</code>
-              </pre>
-            </div>
-          ) : (
-            <div className="empty-result">
-              <div className="empty-icon">
-                <FileCode2 size={26} strokeWidth={1.3} />
-              </div>
-              <strong>{t.emptyTitle}</strong>
-              <p>{t.emptyHelp}</p>
-              <span className="empty-formats">
-                .yaml <span>·</span> .json
-              </span>
-            </div>
-          )}
-        </section>
-        <section className="guide" id="guide">
-          <div className="guide-columns">
-            <article>
-              <div className="guide-icon">
-                <ShieldCheck size={19} />
-              </div>
-              <h3>{t.why}</h3>
-              <p>{t.whyText}</p>
-            </article>
-            <article>
-              <div className="guide-icon">
-                <ArrowDownToLine size={19} />
-              </div>
-              <h3>{t.import}</h3>
-              <p>{t.importText}</p>
-            </article>
-          </div>
-          <h2 className="faq-heading">{t.faq}</h2>
-          <div className="faq-list">
-            {t.faqs.map(([q, a]) => (
-              <details key={q}>
-                <summary>
-                  {q}
-                  <ChevronDown size={16} />
-                </summary>
-                <p>{a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-        <footer>
-          <span>
-            <ArrowRightLeft size={14} />
-            {t.footer}
-          </span>
-          <a
-            href="https://shipengtao.com/en/tools/proxy-converter/"
-            target="_blank"
-            rel="noreferrer"
+      <p className="description">
+        {en
+          ? "VLESS, VMess, Trojan, Hysteria2, TUIC. Conversion runs locally; node links are not uploaded."
+          : "支持 VLESS、VMess、Trojan、Hysteria2、TUIC。在本机转换，不上传节点。"}
+      </p>
+
+      <div className="settings">
+        <label htmlFor="format-select">
+          {en ? "Output" : "输出格式"}
+          <select
+            id="format-select"
+            value={format}
+            onChange={(e) => {
+              setFormat(e.target.value as Format);
+              invalidate();
+            }}
           >
-            {t.reference}
-            <ArrowRight size={13} />
-          </a>
-        </footer>
-      </main>
-    </>
+            {formats.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label htmlFor="routing-select">
+          {en ? "Routing" : "路由"}
+          <select
+            id="routing-select"
+            value={routing}
+            onChange={(e) => {
+              setRouting(e.target.value as Routing);
+              invalidate();
+            }}
+          >
+            <option value="all">{t.all}</option>
+            <option value="china">{t.china}</option>
+          </select>
+        </label>
+        <button className="primary-button" onClick={run}>
+          {en ? "Convert" : "转换"}
+        </button>
+        <span className="shortcut">Ctrl / ⌘ + Enter</span>
+      </div>
+
+      <div className="editors">
+        <section className="editor" aria-labelledby="input-heading">
+          <div className="editor-heading">
+            <h2 id="input-heading">
+              <label htmlFor="node-input">{en ? "Input" : "输入"}</label>
+            </h2>
+            <div className="editor-actions">
+              <button
+                className="text-button"
+                onClick={() => {
+                  invalidate();
+                  setInput(EXAMPLE);
+                }}
+              >
+                {en ? "Example" : "示例"}
+              </button>
+              <button
+                className="text-button"
+                onClick={() => {
+                  setInput("");
+                  invalidate();
+                }}
+              >
+                {en ? "Clear" : "清空"}
+              </button>
+            </div>
+          </div>
+          <textarea
+            id="node-input"
+            aria-describedby="input-help"
+            value={input}
+            wrap="off"
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+            placeholder={
+              en
+                ? "One node link per line, or paste a base64 subscription body."
+                : "每行一个节点链接，或粘贴 Base64 订阅正文。"
+            }
+            onChange={(e) => {
+              setInput(e.target.value);
+              invalidate();
+            }}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                run();
+              }
+            }}
+          />
+          <p className="editor-note" id="input-help">
+            {lineCount
+              ? `${lineCount} ${en ? "non-empty lines" : "个非空行"}`
+              : en
+                ? "Paste subscription contents, not the subscription URL."
+                : "填写订阅内容，不是订阅网址。"}
+          </p>
+        </section>
+        <section className="editor" aria-labelledby="output-heading">
+          <div className="editor-heading">
+            <h2 id="output-heading">
+              <label htmlFor="config-output">{en ? "Result" : "结果"}</label>
+            </h2>
+            <div className="editor-actions">
+              <button disabled={!result?.config} onClick={copyConfig}>
+                {copied ? (en ? "Copied" : "已复制") : en ? "Copy" : "复制"}
+              </button>
+              <button disabled={!result?.config} onClick={download}>
+                {en ? "Download" : "下载"}
+              </button>
+            </div>
+          </div>
+          <textarea
+            id="config-output"
+            value={result?.config || ""}
+            readOnly
+            wrap="off"
+            spellCheck={false}
+            placeholder={en ? "Converted configuration" : "转换结果"}
+          />
+          <p className="editor-note">
+            {result?.config
+              ? `${format}-config.${selected.ext} · ${result.config.split("\n").length} ${en ? "lines" : "行"}`
+              : format === "clash"
+                ? en
+                  ? "For Mihomo / Clash.Meta clients."
+                  : "适用于 Mihomo / Clash.Meta 客户端。"
+                : format === "sing-box"
+                  ? "sing-box 1.12+"
+                  : en
+                    ? "VLESS, VMess and Trojan only."
+                    : "仅支持 VLESS、VMess、Trojan。"}
+          </p>
+        </section>
+      </div>
+
+      <div className="feedback" aria-live="polite">
+        {error && (
+          <p className="error-message" role="alert">
+            {issueText(error, lang)}
+          </p>
+        )}
+        {result && (
+          <>
+            <p
+              className={
+                result.nodes.length ? "result-summary" : "error-message"
+              }
+            >
+              {result.nodes.length
+                ? `${en ? "Converted" : "已转换"} ${result.nodes.length} ${en ? "nodes" : "个节点"}${result.errors.length ? `，${result.errors.length} ${en ? "lines skipped" : "行跳过"}` : ""}${result.decoded ? ` · ${en ? "Base64 decoded" : "Base64 已解码"}` : ""}`
+                : t.noNodes}
+            </p>
+            {result.errors.length > 0 && (
+              <ul className="error-list">
+                {result.errors.map((e, i) => (
+                  <li key={i}>
+                    {en ? `Line ${e.line}: ` : `第 ${e.line} 行：`}
+                    {issueText(e.message, lang)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+        {clipboardError && (
+          <p className="error-message" role="alert">
+            {t.copyError}
+          </p>
+        )}
+      </div>
+
+      <details id="guide" className="help">
+        <summary>{en ? "Usage and compatibility" : "使用说明与兼容性"}</summary>
+        <div className="help-content">
+          <p>
+            {en
+              ? "This tool generates a local configuration file. It does not test connectivity or update subscriptions automatically."
+              : "生成一次性本地配置文件，不测试节点连通性，也不自动更新订阅。"}
+          </p>
+          <p>{t.importText}</p>
+          <p>
+            {en
+              ? "Xray does not support Hysteria2 or TUIC. sing-box does not support XHTTP. Unmappable parameters are reported as errors."
+              : "Xray 不支持 Hysteria2、TUIC；sing-box 不支持 XHTTP。无法映射的参数会报错。"}
+          </p>
+          <p>{t.chinaInfo}</p>
+        </div>
+      </details>
+    </main>
   );
 }
